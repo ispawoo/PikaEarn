@@ -143,13 +143,20 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'Daily limit of 20 ads reached. Try again tomorrow!');
     END IF;
 
-    -- Enforce Ad Cooldown (30 Seconds)
-    IF v_last_ad_watched_at IS NOT NULL AND v_current_time < v_last_ad_watched_at + (v_cooldown_seconds || ' seconds')::INTERVAL THEN
+    -- Enforce Progressive Ad Cooldown (starts at 30s after 1st ad, increases by 30s for each subsequent ad watched today)
+    IF v_last_ad_watched_at IS NOT NULL AND v_ads_watched_today > 0 THEN
         DECLARE
-            v_seconds_left INT;
+            v_dynamic_cooldown INT;
         BEGIN
-            v_seconds_left := CEIL(EXTRACT(EPOCH FROM (v_last_ad_watched_at + (v_cooldown_seconds || ' seconds')::INTERVAL - v_current_time)));
-            RETURN jsonb_build_object('success', false, 'error', 'Cooldown active. Please wait ' || v_seconds_left || ' more seconds.');
+            v_dynamic_cooldown := v_ads_watched_today * 30; -- 1st ad watched today -> 30s, 2nd watched -> 60s, etc.
+            IF v_current_time < v_last_ad_watched_at + (v_dynamic_cooldown || ' seconds')::INTERVAL THEN
+                DECLARE
+                    v_seconds_left INT;
+                BEGIN
+                    v_seconds_left := CEIL(EXTRACT(EPOCH FROM (v_last_ad_watched_at + (v_dynamic_cooldown || ' seconds')::INTERVAL - v_current_time)));
+                    RETURN jsonb_build_object('success', false, 'error', 'Cooldown active. Please wait ' || v_seconds_left || ' more seconds.');
+                END;
+            END IF;
         END;
     END IF;
 

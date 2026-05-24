@@ -17,14 +17,17 @@ export default function DashboardScreen({ userState, setUserState, triggerRefres
 
   const { balance, ads_watched_today, last_ad_watched_at, username } = userState;
 
-  // Calculate and trigger cooldown countdown on mount and when last_ad_watched_at updates
+  // Calculate and trigger cooldown countdown on mount and when last_ad_watched_at or ads_watched_today updates
   useEffect(() => {
     if (last_ad_watched_at) {
       const calculateCooldown = () => {
         const lastWatchedTime = new Date(last_ad_watched_at).getTime();
         const currentTime = Date.now();
         const secondsPassed = Math.floor((currentTime - lastWatchedTime) / 1000);
-        const remaining = Math.max(0, 30 - secondsPassed);
+        
+        // Cooldown starts at 30 seconds for the first ad watched, and increases by 30 seconds for each subsequent ad watched today
+        const cooldownLimit = (ads_watched_today || 1) * 30; 
+        const remaining = Math.max(0, cooldownLimit - secondsPassed);
         
         if (remaining > 0) {
           setCooldownSeconds(remaining);
@@ -51,7 +54,7 @@ export default function DashboardScreen({ userState, setUserState, triggerRefres
     return () => {
       if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
     };
-  }, [last_ad_watched_at]);
+  }, [last_ad_watched_at, ads_watched_today]);
 
   // Clean up timers on unmount
   useEffect(() => {
@@ -59,6 +62,29 @@ export default function DashboardScreen({ userState, setUserState, triggerRefres
       if (adTimerRef.current) clearInterval(adTimerRef.current);
     };
   }, []);
+
+  const handleAdPlayerCompletion = () => {
+    setShowAdPlayer(false);
+    
+    // Check if the real Advertiser SDK script is loaded and active in the window
+    if (typeof window !== 'undefined' && typeof window.show_11052758 === 'function') {
+      setIsAdLoading(true);
+      window.show_11052758()
+        .then(() => {
+          setIsAdLoading(false);
+          claimReward();
+        })
+        .catch((err) => {
+          setIsAdLoading(false);
+          hapticFeedback.notification('error');
+          console.error('SDK Ad playback interrupted or closed:', err);
+          showPopup('Ad Interrupted', 'Please watch the advertisement completely to receive your reward.');
+        });
+    } else {
+      // Direct reward claim (mock fallback)
+      claimReward();
+    }
+  };
 
   const startAdPlayback = () => {
     if (cooldownSeconds > 0) return;
@@ -71,33 +97,19 @@ export default function DashboardScreen({ userState, setUserState, triggerRefres
     hapticFeedback.impact('heavy');
     setIsAdLoading(true);
 
-    // 1. Check if the real Advertiser SDK script is loaded and active in the window
-    if (typeof window !== 'undefined' && typeof window.show_11052758 === 'function') {
-      window.show_11052758()
-        .then(() => {
-          setIsAdLoading(false);
-          claimReward();
-        })
-        .catch((err) => {
-          setIsAdLoading(false);
-          hapticFeedback.notification('error');
-          console.error('SDK Ad playback interrupted or closed:', err);
-          showPopup('Ad Interrupted', 'Please watch the advertisement completely to receive your reward.');
-        });
-      return;
-    }
-
-    // 2. Fallback: buffer simulated network latency, then launch visual mockup player
+    // Always launch our premium visual mockup player overlay first to verify ad delivery
     setTimeout(() => {
       setIsAdLoading(false);
       setShowAdPlayer(true);
       setAdSecondsLeft(6);
       
+      if (adTimerRef.current) clearInterval(adTimerRef.current);
+      
       adTimerRef.current = setInterval(() => {
         setAdSecondsLeft((prev) => {
           if (prev <= 1) {
             clearInterval(adTimerRef.current);
-            claimReward();
+            handleAdPlayerCompletion();
             return 0;
           }
           return prev - 1;
