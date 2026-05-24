@@ -82,7 +82,7 @@ export const TelegramProvider = ({ children }) => {
             initializeTelegram();
           };
           script.onerror = () => {
-            console.error('Failed to load Telegram SDK script. Continuing in mock test mode.');
+            console.log('ℹ️ Telegram SDK script is absent (running in mock browser test mode).');
             initializeTelegram();
           };
           document.head.appendChild(script);
@@ -94,6 +94,21 @@ export const TelegramProvider = ({ children }) => {
             initializeTelegram();
           };
         }
+      }
+
+      // 3. Dynamically load the Advertiser Ads SDK script to completely isolate it from server HTML
+      // This prevents ad-blockers from triggering layout hydration mismatches by deleting elements
+      let adsScript = document.querySelector('script[src="//libtl.com/sdk.js"]');
+      if (!adsScript) {
+        adsScript = document.createElement('script');
+        adsScript.src = '//libtl.com/sdk.js';
+        adsScript.setAttribute('data-zone', '11052758');
+        adsScript.setAttribute('data-sdk', 'show_11052758');
+        adsScript.defer = true;
+        adsScript.onerror = () => {
+          console.warn('⚠️ Advertiser Ads SDK failed to load (possibly blocked by an ad-blocker). fallback modes active.');
+        };
+        document.head.appendChild(adsScript);
       }
     }
   }, [mockUserId]);
