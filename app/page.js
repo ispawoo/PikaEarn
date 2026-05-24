@@ -198,7 +198,7 @@ export default function Home() {
             
             <div className="w-full space-y-2 mt-7">
               <a
-                href="https://t.me/PikaEarnBot"
+                href="https://t.me/PikaEarn_bot"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full h-11 bg-cyan-500 rounded-xl text-slate-950 font-bold text-xs flex items-center justify-center shadow-lg active:scale-98 transition-all hover:brightness-105"

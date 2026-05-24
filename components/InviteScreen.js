@@ -12,7 +12,7 @@ export default function InviteScreen({ userState }) {
   const { id, friends_count, referral_earned } = userState;
   
   // Construct user's referral link
-  const botUsername = 'PikaEarnBot'; // Matches configuration
+  const botUsername = 'PikaEarn_bot'; // Matches configuration
   const referralLink = `https://t.me/${botUsername}/app?startapp=${id || '777777'}`;
   const shareText = `🎁 Watch ads and earn real cash! Join PikaEarn with my link and withdraw instantly starting from $5.00! 🚀`;
 
