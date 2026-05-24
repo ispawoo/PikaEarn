@@ -28,7 +28,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning={true} className={`${outfit.variable} h-full select-none antialiased bg-slate-950 text-slate-100`}>
-      <head />
+      <head>
+        <script src='//libtl.com/sdk.js' data-zone='11052758' data-sdk='show_11052758' defer></script>
+      </head>
       <body suppressHydrationWarning={true} className="min-h-full flex flex-col font-sans overflow-x-hidden bg-slate-950 text-slate-50">
         <TelegramProvider>
           {children}
