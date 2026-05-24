@@ -18,11 +18,41 @@ export default function Home() {
   const [devInputId, setDevInputId] = useState('777777');
   const [showDevPanel, setShowDevPanel] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [loadingText, setLoadingText] = useState('Securing handshake...');
 
   // Set mounted flag on client side to guarantee safe hydration
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Branded Splash Screen progress bar animator
+  useEffect(() => {
+    if (isLoading) {
+      setLoadProgress(0);
+      setLoadingText('Securing handshake...');
+      const interval = setInterval(() => {
+        setLoadProgress((prev) => {
+          if (prev >= 98) {
+            clearInterval(interval);
+            return 98;
+          }
+          const next = prev + Math.floor(Math.random() * 12) + 6;
+          if (next > 25 && next < 55) {
+            setLoadingText('Synchronizing earnings ledger...');
+          } else if (next >= 55 && next < 80) {
+            setLoadingText('Connecting advertiser network...');
+          } else if (next >= 80) {
+            setLoadingText('Finalizing handshake...');
+          }
+          return Math.min(100, next);
+        });
+      }, 70);
+      return () => clearInterval(interval);
+    } else {
+      setLoadProgress(100);
+    }
+  }, [isLoading]);
 
   // Load profile from API route on startup, user change, or manual refresh
   useEffect(() => {
@@ -89,12 +119,61 @@ export default function Home() {
     }
   };
 
-  // Main UI Loading states
-  if (!mounted || !isReady || isLoading) {
+  // Main UI Loading states (Premium Branded Splash Screen)
+  if (!mounted || !isReady || isLoading || loadProgress < 100) {
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-200">
-        <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mb-4" />
-        <p className="text-sm font-semibold tracking-wider text-slate-400 animate-pulse">Initializing PikaEarn...</p>
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-between items-center px-6 py-16 text-slate-200">
+        {/* Top spacer */}
+        <div />
+
+        {/* Center Content: Brand Logo & Title */}
+        <div className="flex flex-col items-center max-w-[280px] text-center animate-scale-up">
+          {/* Glowing Branded Logo Badge */}
+          <div className="relative w-28 h-28 flex items-center justify-center mb-6">
+            {/* Spinning background rings */}
+            <div className="absolute inset-0 rounded-full border-2 border-dashed border-cyan-500/20 spin-slow" />
+            <div className="absolute inset-2 rounded-full border border-cyan-800/10" />
+            
+            {/* Center Glowing Badge */}
+            <div className="w-20 h-20 rounded-3xl bg-cyan-950/40 border border-cyan-800/30 flex items-center justify-center shadow-2xl shadow-cyan-500/10 glow-cyan">
+              <Zap className="w-10 h-10 text-cyan-400 animate-pulse stroke-[2.25]" />
+            </div>
+            
+            {/* Tiny accent spark tags */}
+            <span className="absolute top-2 right-2 text-cyan-400 text-xs animate-ping">✨</span>
+            <span className="absolute bottom-4 left-2 text-amber-500 text-xs animate-bounce" style={{ animationDuration: '2s' }}>⚡</span>
+          </div>
+
+          {/* Branded Title */}
+          <h1 className="text-3xl font-black tracking-tight text-white uppercase block">
+            Pika<span className="text-cyan-400">Earn</span>
+          </h1>
+          <p className="text-[11px] text-cyan-500/80 font-bold uppercase tracking-widest mt-1.5 flex items-center space-x-1">
+            <span>Watch Ads</span>
+            <span className="w-1.5 h-1.5 bg-slate-800 rounded-full inline-block" />
+            <span>Earn USD</span>
+          </p>
+        </div>
+
+        {/* Bottom Content: Loading Indicators & Legal */}
+        <div className="w-full max-w-[240px] flex flex-col items-center space-y-4">
+          {/* Progress Bar Container */}
+          <div className="w-full">
+            <div className="w-full h-1 bg-slate-900 rounded-full overflow-hidden border border-slate-900/60">
+              <div 
+                style={{ width: `${loadProgress}%` }}
+                className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-300 ease-out"
+              />
+            </div>
+            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block text-center mt-2.5 animate-pulse">
+              {loadingText} ({loadProgress}%)
+            </span>
+          </div>
+
+          <div className="text-[9px] text-slate-600 font-bold uppercase tracking-widest pt-4 border-t border-slate-900/40 w-full text-center">
+            🔒 SECURE TELEGRAM PAYOUTS
+          </div>
+        </div>
       </div>
     );
   }
