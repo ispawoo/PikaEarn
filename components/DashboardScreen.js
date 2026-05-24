@@ -71,7 +71,23 @@ export default function DashboardScreen({ userState, setUserState, triggerRefres
     hapticFeedback.impact('heavy');
     setIsAdLoading(true);
 
-    // Simulate network delay / buffering before video launches
+    // 1. Check if the real Advertiser SDK script is loaded and active in the window
+    if (typeof window !== 'undefined' && typeof window.show_11052758 === 'function') {
+      window.show_11052758()
+        .then(() => {
+          setIsAdLoading(false);
+          claimReward();
+        })
+        .catch((err) => {
+          setIsAdLoading(false);
+          hapticFeedback.notification('error');
+          console.error('SDK Ad playback interrupted or closed:', err);
+          showPopup('Ad Interrupted', 'Please watch the advertisement completely to receive your reward.');
+        });
+      return;
+    }
+
+    // 2. Fallback: buffer simulated network latency, then launch visual mockup player
     setTimeout(() => {
       setIsAdLoading(false);
       setShowAdPlayer(true);
