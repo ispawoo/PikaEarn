@@ -1,65 +1,195 @@
-import Image from "next/image";
+// app/page.js
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { useTelegram } from '@/components/TelegramContext';
+import BottomNav from '@/components/BottomNav';
+import DashboardScreen from '@/components/DashboardScreen';
+import WalletScreen from '@/components/WalletScreen';
+import InviteScreen from '@/components/InviteScreen';
+import { Loader2, Settings, Zap } from 'lucide-react';
 
 export default function Home() {
+  const { user, initData, isTelegramClient, setMockUserId, isReady } = useTelegram();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [userState, setUserState] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState(null);
+  const [devInputId, setDevInputId] = useState('777777');
+  const [showDevPanel, setShowDevPanel] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted flag on client side to guarantee safe hydration
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Load profile from API route on startup, user change, or manual refresh
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!isReady || !initData) return;
+
+      setIsLoading(true);
+      setErrorMsg(null);
+
+      // Parse referral code if present
+      let referredBy = null;
+      
+      // 1. Try extracting from URL search parameters (e.g., standard browser launch)
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        referredBy = urlParams.get('referred_by') || urlParams.get('startapp') || urlParams.get('start_param');
+      }
+      
+      // 2. Try extracting from Telegram's native safe launch parameters
+      if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.start_param) {
+        referredBy = window.Telegram.WebApp.initDataUnsafe.start_param;
+      }
+
+      try {
+        const queryParams = new URLSearchParams({
+          initData: initData,
+        });
+        
+        if (referredBy) {
+          queryParams.append('referred_by', referredBy);
+        }
+
+        const response = await fetch(`/api/user?${queryParams.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `tma ${initData}`
+          }
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || 'Failed to fetch user profile');
+        }
+
+        setUserState(result.user);
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        setErrorMsg(err.message || 'Network error loading PikaEarn profile.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [user, initData, isReady]);
+
+  // Dev ID update submission
+  const handleDevIdUpdate = (e) => {
+    e.preventDefault();
+    if (devInputId.trim()) {
+      setMockUserId(devInputId.trim());
+      setShowDevPanel(false);
+    }
+  };
+
+  // Main UI Loading states
+  if (!mounted || !isReady || isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-200">
+        <Loader2 className="w-10 h-10 text-cyan-400 animate-spin mb-4" />
+        <p className="text-sm font-semibold tracking-wider text-slate-400 animate-pulse">Initializing PikaEarn...</p>
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-6">
+        <div className="w-14 h-14 bg-red-950/20 border border-red-800/40 text-red-500 rounded-full flex items-center justify-center mb-4">
+          <span className="text-2xl font-bold">!</span>
+        </div>
+        <h2 className="text-lg font-bold text-slate-100">Initialization Failed</h2>
+        <p className="text-xs text-slate-500 mt-2 max-w-[280px] leading-relaxed">{errorMsg}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-5 px-5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold hover:bg-slate-850 active:scale-95 text-slate-300 transition-all"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.js file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen w-full bg-slate-950 flex justify-center items-start">
+      {/* Centered responsive viewport limits container */}
+      <div className="w-full max-w-[450px] min-h-screen flex flex-col bg-slate-950/20 border-x border-slate-900/60 shadow-2xl relative px-4 pt-4 pb-20">
+        
+        {/* Floating Local Browser Dev Pill */}
+        {!isTelegramClient && (
+          <div className="mb-4">
+            <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-3 flex flex-col space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-extrabold text-cyan-400 flex items-center">
+                  <Zap className="w-3.5 h-3.5 mr-1 animate-pulse" />
+                  DEVELOPER TEST CONSOLE
+                </span>
+                <button
+                  onClick={() => setShowDevPanel(!showDevPanel)}
+                  className="text-[10px] text-slate-400 font-bold hover:underline flex items-center"
+                >
+                  <Settings className="w-3 h-3 mr-0.5" />
+                  {showDevPanel ? 'Close Config' : 'Change Profile'}
+                </button>
+              </div>
+
+              <div className="text-[10px] text-slate-500 font-medium">
+                Active Mock TG ID: <code className="bg-slate-950 px-1 py-0.5 rounded text-cyan-300">#{user?.id}</code> • 
+                Mode: <span className="text-emerald-400 font-semibold uppercase">{userState?.referred_by ? 'Referred Link' : 'Direct Link'}</span>
+              </div>
+
+              {showDevPanel && (
+                <form onSubmit={handleDevIdUpdate} className="flex space-x-2 mt-1 pt-1.5 border-t border-slate-800/40">
+                  <input
+                    type="text"
+                    value={devInputId}
+                    onChange={(e) => setDevInputId(e.target.value)}
+                    placeholder="Enter Mock Telegram User ID (e.g. 999999)"
+                    className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-cyan-500 text-slate-950 font-bold px-3 py-1 rounded-lg text-xs hover:brightness-110 active:scale-95"
+                  >
+                    Set ID
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Screen Routing switches */}
+        {activeTab === 'dashboard' && userState && (
+          <DashboardScreen 
+            userState={userState} 
+            setUserState={setUserState}
+          />
+        )}
+        
+        {activeTab === 'wallet' && userState && (
+          <WalletScreen 
+            userState={userState} 
+            setUserState={setUserState}
+          />
+        )}
+
+        {activeTab === 'invite' && userState && (
+          <InviteScreen 
+            userState={userState} 
+          />
+        )}
+
+        {/* Fixed Bottom Glassmorphic Navigation tab bar */}
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+      </div>
     </div>
   );
 }
