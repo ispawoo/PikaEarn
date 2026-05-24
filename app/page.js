@@ -100,19 +100,55 @@ export default function Home() {
   }
 
   if (errorMsg) {
+    const isAuthError = errorMsg.includes('Hash parameter is missing') || errorMsg.includes('Unauthorized');
+    
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-center p-6">
-        <div className="w-14 h-14 bg-red-950/20 border border-red-800/40 text-red-500 rounded-full flex items-center justify-center mb-4">
-          <span className="text-2xl font-bold">!</span>
-        </div>
-        <h2 className="text-lg font-bold text-slate-100">Initialization Failed</h2>
-        <p className="text-xs text-slate-500 mt-2 max-w-[280px] leading-relaxed">{errorMsg}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-5 px-5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold hover:bg-slate-850 active:scale-95 text-slate-300 transition-all"
-        >
-          Retry Connection
-        </button>
+        {isAuthError ? (
+          <div className="flex flex-col items-center max-w-[320px] mx-auto animate-scale-up">
+            <div className="w-16 h-16 bg-cyan-950/40 border border-cyan-800/30 text-cyan-400 rounded-2xl flex items-center justify-center mb-5 glow-cyan">
+              <span className="text-3xl">🛡️</span>
+            </div>
+            <h2 className="text-xl font-black text-slate-50 tracking-tight">Security Check Active</h2>
+            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+              This is a secure production deployment of <span className="text-cyan-400 font-bold">PikaEarn</span>.
+            </p>
+            <p className="text-xs text-slate-500 mt-2.5 leading-relaxed bg-slate-900/60 p-4 rounded-2xl border border-slate-900">
+              To safeguard user balances and prevent unauthorized exploits, you must launch this application from your native **Telegram Bot WebApp button**.
+            </p>
+            
+            <div className="w-full space-y-2 mt-7">
+              <a
+                href="https://t.me/PikaEarnBot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-11 bg-cyan-500 rounded-xl text-slate-950 font-bold text-xs flex items-center justify-center shadow-lg active:scale-98 transition-all hover:brightness-105"
+              >
+                Launch in Telegram
+              </a>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="w-full h-11 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold text-slate-400 hover:bg-slate-850 active:scale-98 transition-all"
+              >
+                Refresh Session
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="animate-scale-up mx-auto">
+            <div className="w-14 h-14 bg-red-950/20 border border-red-800/40 text-red-500 rounded-full flex items-center justify-center mb-4 mx-auto">
+              <span className="text-2xl font-bold">!</span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-100">Initialization Failed</h2>
+            <p className="text-xs text-slate-500 mt-2 max-w-[280px] leading-relaxed mx-auto">{errorMsg}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-5 px-5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs font-bold hover:bg-slate-850 active:scale-95 text-slate-300 transition-all"
+            >
+              Retry Connection
+            </button>
+          </div>
+        )}
       </div>
     );
   }
