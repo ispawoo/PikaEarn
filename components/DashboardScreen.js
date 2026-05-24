@@ -69,7 +69,16 @@ export default function DashboardScreen({ userState, setUserState, triggerRefres
     // Check if the real Advertiser SDK script is loaded and active in the window
     if (typeof window !== 'undefined' && typeof window.show_11052758 === 'function') {
       setIsAdLoading(true);
-      window.show_11052758('pop')
+      window.show_11052758({
+        type: 'inApp',
+        inAppSettings: {
+          frequency: 2,
+          capping: 0.1,
+          interval: 30,
+          timeout: 5,
+          everyPage: false
+        }
+      })
         .then(() => {
           setIsAdLoading(false);
           claimReward();
