@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, DollarSign, Wallet, Activity, RefreshCw, FileText, Loader2 } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -82,7 +82,7 @@ export default function AdminDashboard() {
       const topUsers = usersData.success ? usersData.users.slice(0, 10) : []; // Top 10 latest
 
       // Stats Table
-      doc.autoTable({
+      autoTable(doc, {
         startY: 54,
         head: [['Metric', 'Value']],
         body: [
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
         new Date(u.created_at).toLocaleDateString()
       ]);
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: finalY + 22,
         head: [['User ID', 'Username', 'Balance', 'Total Earned', 'Joined']],
         body: tableData,
