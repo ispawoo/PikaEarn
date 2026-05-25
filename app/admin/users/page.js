@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Edit2, Trash2, Loader2, X, Check } from 'lucide-react';
+import { Search, Edit2, Trash2, Loader2, X, Check, Eye, User as UserIcon, Calendar, Zap, DollarSign, Activity } from 'lucide-react';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -12,6 +12,9 @@ export default function AdminUsers() {
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ balance: '', total_earned: '', ads_watched_today: '' });
   const [isSaving, setIsSaving] = useState(false);
+
+  // Profile modal state
+  const [viewingUser, setViewingUser] = useState(null);
 
   // Search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -61,7 +64,6 @@ export default function AdminUsers() {
       });
       const data = await res.json();
       if (data.success) {
-        // Update local state
         setUsers(users.map(u => u.id === editingUser.id ? { ...u, ...editForm } : u));
         setEditingUser(null);
       } else {
@@ -100,7 +102,7 @@ export default function AdminUsers() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Manage Users</h1>
-          <p className="text-slate-400 text-sm mt-1">View, edit balances, and remove users</p>
+          <p className="text-slate-400 text-sm mt-1">View profiles, edit balances, and remove users</p>
         </div>
         
         <div className="relative w-full sm:w-64">
@@ -121,30 +123,29 @@ export default function AdminUsers() {
         </div>
       )}
 
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+      {/* Users Table */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-300">
             <thead className="bg-slate-800/50 text-slate-400 uppercase text-xs font-bold tracking-wider">
               <tr>
-                <th className="px-6 py-4">User ID / Name</th>
+                <th className="px-6 py-4">User</th>
                 <th className="px-6 py-4">Balance</th>
-                <th className="px-6 py-4">Total Earned</th>
-                <th className="px-6 py-4">Ads Today</th>
-                <th className="px-6 py-4">Joined</th>
+                <th className="px-6 py-4 hidden md:table-cell">Total Earned</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
               {isLoading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan="4" className="px-6 py-12 text-center text-slate-500">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-cyan-500" />
                     Loading users...
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan="4" className="px-6 py-12 text-center text-slate-500">
                     No users found
                   </td>
                 </tr>
@@ -152,24 +153,40 @@ export default function AdminUsers() {
                 filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-800/30 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-200">{user.username || 'No Name'}</div>
-                      <div className="text-xs text-slate-500 mt-0.5">{user.id}</div>
+                      <div className="flex items-center space-x-3">
+                        <img 
+                          src={`https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}&backgroundColor=0f172a`} 
+                          alt="avatar" 
+                          className="w-10 h-10 rounded-full bg-slate-950 border border-slate-700"
+                        />
+                        <div>
+                          <div className="font-semibold text-slate-200">{user.username || 'No Name'}</div>
+                          <div className="text-xs text-slate-500 font-mono mt-0.5">{user.id}</div>
+                        </div>
+                      </div>
                     </td>
-                    <td className="px-6 py-4 font-mono text-emerald-400">${Number(user.balance).toFixed(2)}</td>
-                    <td className="px-6 py-4 font-mono text-slate-400">${Number(user.total_earned).toFixed(2)}</td>
-                    <td className="px-6 py-4">{user.ads_watched_today} / 20</td>
-                    <td className="px-6 py-4 text-xs text-slate-400">{new Date(user.created_at).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 font-mono text-emerald-400 font-bold">${Number(user.balance).toFixed(2)}</td>
+                    <td className="px-6 py-4 font-mono text-slate-400 hidden md:table-cell">${Number(user.total_earned).toFixed(2)}</td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end space-x-2">
+                      <div className="flex justify-end space-x-1 sm:space-x-2">
+                        <button 
+                          onClick={() => setViewingUser(user)}
+                          className="p-2 bg-slate-800 hover:bg-cyan-900/50 text-slate-300 hover:text-cyan-400 rounded-lg transition-colors border border-slate-700 hover:border-cyan-800"
+                          title="View Profile"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button 
                           onClick={() => handleEditClick(user)}
-                          className="p-2 bg-slate-800 hover:bg-cyan-900/50 text-slate-300 hover:text-cyan-400 rounded-lg transition-colors border border-slate-700 hover:border-cyan-800"
+                          className="p-2 bg-slate-800 hover:bg-blue-900/50 text-slate-300 hover:text-blue-400 rounded-lg transition-colors border border-slate-700 hover:border-blue-800"
+                          title="Edit Balance"
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleDelete(user.id)}
                           className="p-2 bg-slate-800 hover:bg-red-900/50 text-slate-300 hover:text-red-400 rounded-lg transition-colors border border-slate-700 hover:border-red-800"
+                          title="Delete User"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -183,12 +200,92 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Edit Modal */}
+      {/* View Profile Modal (Clean, Professional, Data Showing) */}
+      {viewingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-lg shadow-2xl relative my-auto">
+            {/* Modal Header Background */}
+            <div className="h-32 bg-gradient-to-r from-cyan-900/40 to-blue-900/40 rounded-t-2xl relative">
+              <button 
+                onClick={() => setViewingUser(null)} 
+                className="absolute top-4 right-4 text-white/70 hover:text-white p-1 rounded-full bg-slate-900/40 hover:bg-slate-900/60 transition-all z-10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Avatar positioning */}
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 flex justify-center">
+              <div className="p-1 bg-slate-900 rounded-full">
+                <img 
+                  src={`https://api.dicebear.com/7.x/bottts/svg?seed=${viewingUser.id}&backgroundColor=0f172a`} 
+                  alt="avatar profile" 
+                  className="w-24 h-24 rounded-full border-2 border-cyan-500/50 shadow-lg shadow-cyan-900/50 bg-slate-800"
+                />
+              </div>
+            </div>
+
+            {/* Profile Content */}
+            <div className="pt-14 pb-8 px-6 sm:px-8 text-center">
+              <h3 className="text-2xl font-black text-white">{viewingUser.username || 'Anonymous User'}</h3>
+              <p className="text-sm text-cyan-400 font-mono mt-1">ID: {viewingUser.id}</p>
+
+              <div className="mt-8 grid grid-cols-2 gap-4">
+                {/* Balance Card */}
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center">
+                  <Wallet className="w-6 h-6 text-emerald-400 mb-2" />
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Current Balance</span>
+                  <span className="text-xl font-bold text-emerald-400 mt-1">${Number(viewingUser.balance).toFixed(2)}</span>
+                </div>
+
+                {/* Total Earned Card */}
+                <div className="bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-cyan-400 mb-2" />
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Earned</span>
+                  <span className="text-xl font-bold text-cyan-400 mt-1">${Number(viewingUser.total_earned).toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Detailed List Stats */}
+              <div className="mt-6 space-y-3">
+                <div className="flex justify-between items-center bg-slate-800/30 px-4 py-3 rounded-lg">
+                  <div className="flex items-center text-slate-400"><Activity className="w-4 h-4 mr-2" /> <span className="text-sm font-semibold">Ads Watched Today</span></div>
+                  <span className="text-white font-bold">{viewingUser.ads_watched_today} / 20</span>
+                </div>
+                
+                <div className="flex justify-between items-center bg-slate-800/30 px-4 py-3 rounded-lg">
+                  <div className="flex items-center text-slate-400"><Zap className="w-4 h-4 mr-2" /> <span className="text-sm font-semibold">Total Ads (Est.)</span></div>
+                  <span className="text-white font-bold">{Math.floor(Number(viewingUser.total_earned) / 0.10)}</span>
+                </div>
+
+                <div className="flex justify-between items-center bg-slate-800/30 px-4 py-3 rounded-lg">
+                  <div className="flex items-center text-slate-400"><Calendar className="w-4 h-4 mr-2" /> <span className="text-sm font-semibold">Join Date</span></div>
+                  <span className="text-white font-bold text-sm">{new Date(viewingUser.created_at).toLocaleDateString()} {new Date(viewingUser.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                </div>
+              </div>
+              
+              <div className="mt-8 pt-6 border-t border-slate-800">
+                <button 
+                  onClick={() => {
+                    setViewingUser(null);
+                    handleEditClick(viewingUser);
+                  }}
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3 rounded-xl transition-colors flex justify-center items-center"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" /> Edit User Balance
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal (Preserved existing functionality) */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl my-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Edit User <span className="text-cyan-400">#{editingUser.id}</span></h3>
+              <h3 className="text-xl font-bold text-white">Edit <span className="text-cyan-400">@{editingUser.username || editingUser.id}</span></h3>
               <button onClick={() => setEditingUser(null)} className="text-slate-500 hover:text-slate-300">
                 <X className="w-5 h-5" />
               </button>
@@ -230,7 +327,7 @@ export default function AdminUsers() {
               <button
                 onClick={handleSaveEdit}
                 disabled={isSaving}
-                className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center mt-6"
+                className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-xl transition-all active:scale-95 flex items-center justify-center mt-6 shadow-lg shadow-cyan-500/20"
               >
                 {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                   <>
