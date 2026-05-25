@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 // GET all users
 export async function GET(request) {
   if (!isSupabaseConfigured() || !supabaseAdmin) {
@@ -22,7 +24,7 @@ export async function GET(request) {
 
     // Remove sensitive/internal formatting if necessary, or just return
     // Converting numeric strings to numbers for the frontend
-    const formattedUsers = users.map(user => ({
+    const formattedUsers = (users || []).map(user => ({
       ...user,
       balance: Number(user.balance),
       total_earned: Number(user.total_earned)

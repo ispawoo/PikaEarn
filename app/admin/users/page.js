@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Edit2, Trash2, Loader2, X, Check, Eye, User as UserIcon, Calendar, Zap, DollarSign, Activity } from 'lucide-react';
+import { Search, Edit2, Trash2, Loader2, X, Check, Eye, User as UserIcon, Calendar, Zap, DollarSign, Activity, Wallet } from 'lucide-react';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);

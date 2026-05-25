@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin, isSupabaseConfigured } from '@/lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 // GET all withdrawals
 export async function GET(request) {
   if (!isSupabaseConfigured() || !supabaseAdmin) {
@@ -34,7 +36,7 @@ export async function GET(request) {
 
     if (error) throw error;
 
-    const formattedWithdrawals = withdrawals.map(w => ({
+    const formattedWithdrawals = (withdrawals || []).map(w => ({
       ...w,
       amount: Number(w.amount)
     }));
